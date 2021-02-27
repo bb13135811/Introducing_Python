@@ -252,3 +252,109 @@ who_says(hunted2)
 who_says(brook)
 who_says(BabblingBrook())
 
+#特殊方法
+#建立Word類別, 使用equals()方法才比較兩個單字,忽略大小寫
+class Word():
+    def __init__(self, text):
+        self.text = text # self.text是Word物件裡的文字字串
+    def equals(self, text2):
+        return self.text.lower() == text2.text.lower() #將text與text2的文字字串比較
+#使用三個不同的文字字串製作三個Word物件
+first = Word('Ha')
+second = Word('hA')
+third = Word('He')
+first.equals(second)
+first.equals(third)
+
+#將equals()方法更改為特殊名稱 __eq__()
+class Word():
+    def __init__(self, text):
+        self.text = text
+    def __eq__(self, text2):
+        return self.text.upper() == text2.text.upper()
+first = Word('Ha')
+second = Word('hA')
+third = Word('He')
+first == second
+first == third
+
+first = Word('ha')
+first
+print(first)
+#將__str__()與__repr__()加入到Word類別
+class Word():
+    def __init__(self, text):
+        self.text = text
+    def __eq__(self, text2):
+        return self.text.lower() == text2.text.lower()
+    def __str__(self):
+        return self.text
+    def __repr__(self): #representation
+        return 'Word("' + self.text + '")'
+first = Word('ha')
+first #uses __repr__
+print(first)
+
+class Test():
+    def __init__(self):
+        pass
+    def __str__(self): #如果調用了print function，其輸出是__str__返回的字串
+        return "the str"
+    def __repr__(self): #若是直接輸入變數，輸出則為__repr__返回的字串
+        return "repr"
+a = Test()
+a
+print(a)
+
+#組合
+#製作bill與tail物件,並提供新的duck物件
+class Bill():
+    def __init__(self, description):
+        self.description = description
+class Tail():
+    def __init__(self, length):
+        self.length = length
+class Duck():
+    def __init__(self, bill, tail):
+        self.bill = bill
+        self.tail = tail
+    def about(self):
+        print("The duck has a", self.bill.description, 'bill and a', self.tail.length, 'length')
+tail = Tail('long')
+bill = Bill('wide orange')
+duck = Duck(bill, tail)
+duck.about()
+
+#具名Tuple
+#Tuple的一種子類別 可以用名稱(.name)及位置([offset])來存取值
+#將Duck類別轉換成具名Tuple,使用bill和tail作為字串屬性
+#呼叫namedtuple會使用兩個引數 1.名稱 2.欄位名稱字串,以空格分開
+from collections import namedtuple #必須先載入模組
+Duck = namedtuple('Dcuk', 'bill tail')
+duck = Duck('wide orange', 'long')
+duck
+duck.bill
+duck.tail
+
+#使用字典來製作具名tuple
+parts = {'bill':'wide orange', 'tail':'long'}
+duck2 = Duck(**parts) #關鍵字引數,取出部分的鍵與值並當成引數傳給Duck()
+duck2
+duck2 = Duck(bill = 'wide orange', tail = 'long')
+#具名tuple不可變,但可以更換屬性並回傳
+duck3 = duck2._replace(tail = 'big', bill = 'small')
+duck3
+#將duck定義成字典
+duck_dict = {'bill' : 'wide orange', 'tail' : 'long'}
+duck_dict
+#將欄位加入字典
+duck_dict['color'] = 'green'
+duck_dict
+#不是加到具名tuple
+#duck.color
+
+#具名tuple的優點
+# 外觀與行為都像不可變物件
+# 節省空間與時間
+# 可以用句點標記法取代字典的方括號來存取屬性
+# 可當成字典鍵使用
