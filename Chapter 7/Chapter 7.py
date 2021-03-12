@@ -153,3 +153,52 @@ d = {'n': 42, 'f' : 7.03, 's' : 'string'}
 '{0:!^20s}'.format('SALES') #將字元放在:後面 (總共20字元)
 
 # 以正規表達式匹配
+# 定義想要匹配的字串模式 + 要匹配的對象字串
+result = re.match('You', 'ABCDE')
+                # 模式    # 來源
+# 可以先編譯模式以提升匹配速度
+youpattern = re.compile('You')
+result = youpattern.match('ABCDE')
+# match()會檢查來源是否以該模式開頭
+# search() 回傳遞一個匹配項目(如果有的話)
+# findall() 回傳所有不重疊的項目
+# spilt() 用'模式'在匹配處分割'來源',並回傳一串字串片段
+# sub() 使用另一個'取代引數',將'來源'內所有'匹配模式項目'換成'取代引數'
+
+# 使用match()取出匹配項目
+import re
+source = 'Young boy'
+m = re.match('You', source) # match()會從來源開頭進行
+if m:
+    print(m.group())
+m = re.match('^Y', source)
+if m:
+    print(m.group())
+m = re.match('boy', source)
+if m:
+    print(m.group())  # match()只會在'模式'位於'來源'開頭才生效
+m = re.search('boy', source) # search()則都會生效
+if m:
+    print(m.group())
+m = re.search('.*boy', source) # '.'代表任何單一字元
+if m:                          # '*'代表任何在他前面的東西,不論數量
+    print(m.group())           # '.*' 任何數量的字元(包含零個)
+
+# 使用findall()匹配全部
+source = 'mmmmmmmmnnnnnnnnnnddd'
+m = re.findall('n', source)
+print(m)
+print('Found', len(m), 'matches')
+
+m = re.findall('d.', source) # 'd'的後面有什麼字元?
+m # 最後一個d不會被匹配
+m = re.findall('d.?', source) # 使用'?'表示'd'後面的字元不是必要的
+m
+
+# 使用spilt()來分割
+m = re.split('n', source)
+m
+
+#使用 sub()來替換匹配項目
+m = re.sub('n', '?', source)
+m
