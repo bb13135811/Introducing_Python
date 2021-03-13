@@ -159,12 +159,12 @@ result = re.match('You', 'ABCDE')
 # 可以先編譯模式以提升匹配速度
 youpattern = re.compile('You')
 result = youpattern.match('ABCDE')
-# match()會檢查來源是否以該模式開頭
-# search() 回傳遞一個匹配項目(如果有的話)
-# findall() 回傳所有不重疊的項目
-# spilt() 用'模式'在匹配處分割'來源',並回傳一串字串片段
-# sub() 使用另一個'取代引數',將'來源'內所有'匹配模式項目'換成'取代引數'
-
+# function	功能
+# re.match( pattern, source )	查看字串是否以規定的規則開頭
+# re.search( pattern, source )	會返回第一次成功的匹配值 (如果有成功)
+# re.findall( pattern, source)	會返回所有成功且不重複的匹配值 (如果有成功)
+# re.split( pattern, source )	會根據 規則 將 字串 切分成若干段，返回由這些片段組成的list
+# re.sub( pattern, replacement, source )	還需一個額外的參數 replacement，它會把 字串 中所有匹配規則的字串 替換成 replacement
 # 使用match()取出匹配項目
 import re
 source = 'Young boy'
@@ -202,3 +202,116 @@ m
 #使用 sub()來替換匹配項目
 m = re.sub('n', '?', source)
 m
+
+# 模式:特殊字元
+
+# 特殊字元	功能
+# .	        代表任意除 \n 外的字元
+# *	        表示任意多個字元(包括 0 個)
+# ?	        表示可選字元( 0 個或 1 個)
+# \d	    一個數字字元。等價於[0-9]
+# \D	    一個非數字字元。等價於[^0-9]
+# \w	    一個 字母 或 數字 包括底線字元。等價於[A-Za-z0-9_]
+# \W	    一個 非字母 非數字 非底線字元。等價於[^A-Za-z0-9_]
+# \s	    空白字元。等價於[ \f\n\r\t\v]
+# \S	    非空白字元。等價於[^ \f\n\r\t\v]
+# \b	    單詞邊界（一個 \w 與 \W 之間的範圍，順序可逆）
+# \B	    非單詞邊界
+
+import string
+printable = string.printable
+len(printable)
+printable[:50]
+printable[50:]
+
+re.findall('\d', printable) # 找出printable裡的數字
+re.findall('\w', printable) # 找出英文數字還有底線
+re.findall('\s', printable) # 找出空白字元
+
+# 正規表達式不僅限於ASCII, \d 會匹配任何Unicode稱為數字的東西
+X = 'abc' + '+-*' + '\uA78C' + '\u080D'
+re.findall('\W', X)
+
+# 模式:使用指定符
+source = '''I wish I may, I wish I might
+...have a dish of fish tonight.'''
+
+re.findall('wish', source)
+re.findall('wish|fish', source)
+re.findall('^wish', source)
+re.findall('^I wish', source)
+re.findall('wish$', source)
+re.findall('fish tonight.$', source)
+
+# ^與$字元稱為 '錨點'(anchor)
+# ^ -> 將搜尋動作錨定在搜尋字串的開頭
+# $ ->　　　　　 ＂＂　　　　　　結尾
+# .$ -> 匹配任何在行尾的字元(包括句號)
+re.findall('fish tonight\.$', source) # 使用跳脫符號，表示\.為一個點而不是萬用字元
+re.findall('[wf]ish', source) # 用ish來找w or f
+re.findall('[wsh]+', source) # 找w、s、h組合出來的字串　(越多越好)
+re.findall('ght\W', source) # 找ght開頭，後面接著非字母 非數字 非底線字元
+re.findall('I (?=wish)', source) # 找I開頭，後面是wish，但只返回前面
+re.findall('(?<=I) wish', source) # 找前面開頭是I的wish，只返回後面
+re.findall('\bfish', source) # 避免使用Python的原始字串而用到轉義字元 (\b被當作是跳脫字元返回符號)
+re.findall(r'\bfish', source) # 採用r來宣告這是一個原始的字串,停用轉義字元
+
+# 模式:指定匹配輸出
+m = re.search(r'(. dish\b).*(\bfish)',source) # 將模式放到括號內，匹配項會被存到自己的群組內
+m.group()
+m.groups() # 用 m.groups() 來取得他們的tuple
+
+# (?P<name> expr) -> 匹配expr，將匹配項存在name群組內
+m = re.search(r'(?P<Dish>. dish\b).*(?P<Fish>\bfish)', source) # 可以透過<name>設定名稱
+m.group()
+m.groups()
+m.group('Dish')
+m.group('Fish')
+
+# 二進位資料
+# byte -> 不可變 / bytearray -> 可變
+blist = [1,2,3,255]
+the_bytes = bytes(blist)
+the_bytes
+the_bytes_array = bytearray(blist)
+the_bytes_array
+
+the_bytes[1] = 127 # 無法更改byte變數
+the_bytes_array[1] = 127 # bytesarray可以更改變數
+the_bytes_array
+
+the_bytes = bytes(range(0,256))
+the_bytes
+the_bytes_array = bytearray(range(0,256))  # 都會建立256個元素，值從0~255
+the_bytes_array
+
+# 用struct來轉換二進位資料
+# 編寫程式，以擷取圖像的寬與高
+import struct
+valid_png_header = b'\x89PNG\r\n\x1a\n' #有效的png檔的開頭
+data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR' + \
+    b'\x00\x00\x00\x9a\x00\x00\x00\x8d\x08\x02\x00\x00\x00\xc0'  # PNG檔前30個byte (width: 16-20個byte/height 21-24個byte)
+if data[:8] == valid_png_header:  #>LL為格式化字串，指示unpack()解譯byte輸入序列
+    width, height = struct.unpack('>LL', data[16:24])  # 每個L代表一個4-byte的長整數(以big-endian格式儲存)
+    print('Valid PNG, width', width, 'height', height )
+else:
+    print('Not a valid PNG')
+data[16:20]
+data[20:24]
+
+# Big-endian會將最重要的byte放在最左邊. 由於寬長皆小於255,因此會放到序列的最後一個byte
+0x9a
+0x8d
+
+# 反過來將資料轉換成byte - struct pack()
+import struct
+struct.pack('>L', 154)
+struct.pack('>L', 141)
+
+# 格式指定符在endian字元後面, 可在指定符前面加上數字以表示數量
+struct.unpack('>2L', data[16:24])
+struct.unpack('>16x2L6x', data) # 可以使用x指定符來跳過
+# 1.使用big-endian整數格式 (>)
+# 2.跳過16個bytes (16x)
+# 3.讀取8個bytes-兩個不帶符號的長整數 (2L)
+# 4.跳過最後的6個bytes (6x)
