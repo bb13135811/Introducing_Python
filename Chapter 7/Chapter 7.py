@@ -315,3 +315,12 @@ struct.unpack('>16x2L6x', data) # 可以使用x指定符來跳過
 # 2.跳過16個bytes (16x)
 # 3.讀取8個bytes-兩個不帶符號的長整數 (2L)
 # 4.跳過最後的6個bytes (6x)
+
+# 用binascii()來轉換Byte/字串
+import binascii
+valid_png_header = b'\x89PNG\r\n\x1a\n'
+print(binascii.hexlify(valid_png_header))
+
+print(binascii.unhexlify(b'89504e470d0a1a0a'))
+
+# 位元運算子
