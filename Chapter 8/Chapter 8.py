@@ -241,3 +241,94 @@ with open('villains', 'rt') as fin:
     cin = csv.DictReader(fin) # 忽略fieldname引數，使用檔案第一行的值作為欄位標籤
     villains = [row for row in cin]
 villains
+
+
+# XML
+# 使用“標籤”劃分資料
+
+# 1.標籤以<字元開頭
+# 2.忽略空白字元
+# 3.通常<menu>等開始標籤會匹配結束標籤</menu>
+# 4.標籤可被嵌套在其他標籤裡
+# 5.開始標籤裡可能會有選用的屬性
+# 6.標籤裡可以放“值”
+# 7.假如標籤內沒有值或子標籤，可用一個標籤敘述，在最後的括號前加上斜號，以取代開始與結束標籤
+# 8.可以隨意選擇放置資料的位置
+
+# 使用ElementTree解析XML
+import xml.etree.ElementTree as et
+tree = et.ElementTree(file='menu.xml')
+root = tree.getroot()
+root.tag
+
+# 每個元素包含如下屬性
+# tag：string物件，表示資料代表的種類。
+# attrib：dictionary物件，表示附有的屬性。
+# text：string物件，表示element的內容。
+# tail：string物件，表示element閉合之後的尾跡。
+# 若干子元素（child elements）
+
+for child in root:
+    print('tag:', child.tag, 'attributes:', child.attrib)
+    for grandchild in child:
+        print('\ttag:', grandchild.tag, 'attrubutes:', child.attrib)
+len(root) # number of menu sections
+len(root[0]) # number of breakfast items
+
+
+# JSON
+menu = \
+{
+"breakfast": {
+        "hours": "7-11",
+        "items": {
+                "breakfast burritos": "$6.00",
+                "pancakes": "$4.00"
+                }
+        },
+"lunch" : {
+        "hours": "11-3",
+        "items": {
+                "hamburger": "$5.00"
+                }
+        },
+"dinner": {
+        "hours": "3-10",
+        "items": {
+                "spaghetti": "$8.00"
+                }
+        }
+}
+
+import json
+menu_json = json.dumps(menu) # json.dumps()將python轉化為json
+menu_json
+
+menu2 = json.loads(menu_json) # json.loads() 將json轉化為python物件
+menu2
+
+import datetime
+now = datetime.datetime.utcnow()
+now
+import json
+json.dumps(now)
+
+# 將datetime轉換成某些JSON了解的東西，例如字串 or epoch值
+now_str = str(now)
+json.dumps(now_str)
+
+from time import mktime
+now_epoch = int(mktime(now.timetuple()))
+json.dumps(now_epoch)
+
+#可以使用“繼承”修改JSON的編碼方式
+import json
+class DTEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime): #isinstance()會檢查obj物件是否為datetime.datetime類別
+            return int(mktime(obj.timetuple()))
+         # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
+json.dumps(now, cls=DTEncoder)
+# 可使用isinstance()與適合類型的方式查看結構並檢視值
+# 例如：項目為字典，可用keys()、values()、items()擷取內容
