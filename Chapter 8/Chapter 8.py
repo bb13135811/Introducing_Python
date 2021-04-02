@@ -332,3 +332,52 @@ class DTEncoder(json.JSONEncoder):
 json.dumps(now, cls=DTEncoder)
 # 可使用isinstance()與適合類型的方式查看結構並檢視值
 # 例如：項目為字典，可用keys()、values()、items()擷取內容
+
+
+
+# YAML
+# 與JSON很像，有鍵與值，但可處理更多資料類型
+
+import yaml
+with open('mcintyre.yaml', 'rt') as fin:
+    text = fin.read()
+data = yaml.safe_load(text) # lead()將YAML字串轉換成python資料
+data['details']             # 如果要匯入不信任的YAML，使用safe_load()來代替load()
+len(data['poems'])
+
+# 假如資料超過一層，可使用字典/串列/字典來參考，取得第二首詩的標題
+data['poems'][1]['title']
+
+
+# configparser解析器
+import configparser
+cfg = configparser.ConfigParser()
+cfg.read('settings.cfg')
+cfg
+cfg['french']
+cfg['french']['greeting']
+cfg['files']['bin']
+
+
+# 用pickle來序列化(serializing)
+# pickle模組可儲存及還原特殊二進位格式物件
+import pickle
+import datetime
+now1 = datetime.datetime.utcnow()
+pickled = pickle.dumps(now1)
+now2 = pickle.loads(pickled)
+now1
+now2
+
+# 可在自己的類別及物件使用pickle
+import pickle
+class Tiny():
+    def __str__(self):
+        return "tiny"
+obj1 = Tiny()
+obj1
+str(obj1)
+pickled = pickle.dumps(obj1) # dumps() 序列化(將資料結構或物件狀態轉換成可取用格式)
+pickled
+obj2 = pickle.loads(pickled) # loads() 反序列化
+obj2
