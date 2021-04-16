@@ -1,0 +1,16 @@
+DDL:
+OperationSQL                        patternSQL                      example
+Create a database                   CREATE DATABASE dbname          CREATE DATABASE d
+Select current database             USE dbname                      USE d
+Delete a database and its tables    DROP DATABASE dbname            DROP DATABASE d
+Create a table                      CREATE TABLE tbname (coldefs)   CREATE TABLE t (id INT, countINT)
+Delete a table                      DROP TABLE tbname               DROP TABLE t
+Remove all rows from a table        TRUNCATE TABLE tbname           TRUNCATE TABLE t
+
+DML:
+Add a row                           INSERT INTO tbname VALUES(…)    INSERT INTO t VALUES(7, 40)
+Select all rows and columns         SELECT * FROM tbname            SELECT * FROM t
+Select all rows, some columns       SELECT cols FROM tbname         SELECT id, count FROM t
+Select some rows, some columns      SELECT cols FROM tbname WHERE condition     SELECT id, count from t WHERE count > 5 AND id = 9
+Change some rows in a column        UPDATE tbname SET col = value WHERE condition   UPDATE t SET count=3 WHERE id=5
+Delete some rows                    DELETE FROM tbname WHERE condition  DELETE FROM t WHERE count <= 10 OR id = 16

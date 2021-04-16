@@ -192,7 +192,7 @@ bdata[0]
 # CSV
 # 常見分隔符號， 1.,  2. |  3. \t
 # 轉義序列： 假如欄位內容有分隔字元，必須以引號匡選整欄 or 在前面加上轉義字元
-# 檔案使用行尾字元
+# 檔案會使用不同的行尾字元
 # 第一行可能是欄位名稱
 
 # 如何讀取、寫入一連串的“列”，每一列有一連串的欄位
@@ -335,6 +335,8 @@ json.dumps(now, cls=DTEncoder)
 
 
 
+
+
 # YAML
 # 與JSON很像，有鍵與值，但可處理更多資料類型
 
@@ -381,3 +383,315 @@ pickled = pickle.dumps(obj1) # dumps() 序列化(將資料結構或物件狀態�
 pickled
 obj2 = pickle.loads(pickled) # loads() 反序列化
 obj2
+
+
+# SQL
+# 陳述式分兩大種
+# DDL (資料定義語言)
+# DML (資料處理語言)
+
+# DB-API
+# connect() - 連結到資料庫，可傳入帳號、密碼、伺服器地址等引數
+# cursor() - 建立cursor物件來處理查詢指令
+# execute() & executemany() - 對資料庫執行一或多個SQL指令
+# fetchone()、fetchmany()、fetchall() - 取得execute的結果
+
+
+# SQLite
+import sqlite3
+conn = sqlite3.connect('enterprise.db') # 製作稱為'enterprise.db的資料庫
+curs = conn.cursor() # cursor() - 建立cursor物件來處理查詢指令
+curs.execute('''CREATE TABLE zoo 
+    (critter VARCHAR(20) PRIMARY KEY,
+    count INT,
+    damages FLOAT)''') # execute() & executemany() - 對資料庫執行一或多個SQL指令
+# critter - 變數長度字串，為主鍵
+# count - 該動物目前整數數量
+# damages - 動物造成損失金額
+# 加入動物
+curs.execute('INSERT INTO zoo VALUES("duck", 5, 0.0)')
+curs.execute('INSERT INTO zoo VALUES("bear", 2, 1000.0)')
+# 使用“佔位符” - 較安全的資料插入方式
+ins = 'INSERT INTO zoo(critter, count, damages) VALUES(?,?,?)'
+curs.execute(ins, ('weasel', 1, 2000.0))
+
+curs.execute('SELECT * FROM zoo') # 將所有動物取出
+rows = curs.fetchall()
+print(rows)
+
+curs.execute('SELECT * FROM ZOO ORDER BY count')
+curs.fetchall()
+
+curs.execute('SELECT * FROM ZOO ORDER BY count DESC') # 以降冪排序
+curs.fetchall()
+
+curs.execute('''SELECT * FROM zoo WHERE
+    damages = (SELECT MAX(damages) FROM zoo)''')
+curs.fetchall()
+# 必須在完成工作時關閉開發連結與cursor
+curs.close()
+conn.close()
+
+
+import sqlalchemy as sa
+conn = sa.create_engine('sqlite://')
+conn.execute('''CREATE TABLE zoo
+    (critter VARCHAR(20) PRIMARY KEY,
+     count INT,
+     damages FLOAT)''')
+ins = 'INSERT INTO zoo(critter, count, damages) VALUES (?, ?, ?)'
+conn.execute(ins, 'duck', 10, 0.0)
+conn.execute(ins, 'bear', 2, 1000.0)
+conn.execute(ins, 'weasel', 1, 2000.0)
+rows = conn.execute('SELECT * FROM zoo')
+print(rows) # rows在SQLAlchemy不是串列，而是ResultProxy，無法被印出來
+for row in rows:
+    print(row)
+
+
+# SQL Expression Language
+import sqlalchemy as sa
+conn = sa.create_engine('sqlite://')
+# 為定義zoo資料表，使用Expression Language取代SQL
+meta = sa.MetaData()
+zoo = sa.Table('zoo', meta,
+    sa.Column('critter', sa.String, primary_key=True),
+    sa.Column('count', sa.Integer),
+    sa.Column('damages', sa.Float)
+    )
+meta.create_all(conn)
+# 使用Expression Language函式來插入資料
+conn.execute(zoo.insert(('bear', 2, 1000.0)))
+conn.execute(zoo.insert(('weasel', 1, 2000.0)))
+conn.execute(zoo.insert(('duck', 10, 0)))
+result = conn.execute(zoo.select()) # 選擇資料表內zoo物件的所有東西
+rows = result.fetchall()
+print(rows)
+
+# 物件-關係對應器
+import sqlalchemy as sa
+from sqlalchemy.ext.declarative import declarative_base
+conn = sa.create_engine('sqlite:///zoo.db')
+Base = declarative_base()
+class Zoo(Base):
+    __tablename__ = 'zoo'
+    critter = sa.Column('critter', sa.String, primary_key=True)
+    count = sa.Column('count', sa.Integer)
+    damages = sa.Column('damages', sa.Float)
+    def __init__(self, critter, count, damages):
+        self.critter = critter
+        self.count = count
+        self.damages = damages
+    def __repr__(self):
+        return "<Zoo({}, {}, {})>".format(self.critter, self.count, self.damages)
+Base.metadata.create_all(conn) #建立資料表與資料庫
+#建立Python物件插入資料
+first = Zoo('duck', 5, 0.0)
+second = Zoo('bear', 2, 1000.0)
+third = Zoo('weasel', 1, 2000.0)
+first
+# 建立session與資料庫互動
+from sqlalchemy.orm import sessionmaker
+Session = sessionmaker(bind=conn) # 將conn綁定
+session = Session()
+# 將之前三個物件寫入資料庫
+session.add(first) # add() - 加入一個物件
+session.add_all([second, third]) # add_all() - 加入一個串列
+session.commit()
+rows = conn.execute('''SELECT * FROM zoo''')
+for row in rows:
+    print(row)
+
+
+# NOSQL 資料存放區
+
+# dbm (鍵-值存放空間)
+# 'r'代表讀取，'w'代表寫入，'c'代表兩者，假如不存在會建立檔案
+import dbm
+db = dbm.open('definition', 'c')
+# 建立鍵-值對，將值指派給鍵
+db['mustard'] = 'yellow'
+db['ketchup'] = 'red'
+db['pesto'] = 'green'
+len(db)
+db['mustard']
+db.close()
+db = dbm.open('definition', 'r')
+db['mustard']
+
+
+# Redis (ㄧ種資料結構伺服器)
+
+# 字串
+#連結到某個Redis伺服器的主機(預設為localhost)、連接埠(預設為6379)
+import redis
+conn = redis.Redis()
+redis.Redis('localhost')
+redis.Redis('localhost', 6379) # 兩者會產生相同的結果
+#列出所有鍵
+conn.keys('*')
+conn.set('secret', 'ni!')
+conn.set('carats', 24)
+conn.set('fever', '101.5')
+# 以鍵取回值
+conn.get('secret')
+conn.get('carats')
+conn.get('fever')
+# 當鍵不存在時，setnx()才會設定新值
+conn.setnx('secret', 'the new one') #已存在，則出現False
+conn.get('secret') #還是會回傳舊值
+conn.getset('secret', 'the new one') #先回傳舊值，接著設為新值
+conn.get('secret') # 新值設定成功
+# 使用getrange()取得子字串
+conn.getrange('secret', -3, -1) # 0=開始，-1=結束
+# 使用setrange()替換一個子字串
+conn.setrange('secret', 0, 'THE') # 使用以零開始的位移
+conn.get('secret')
+
+#使用mset()一次設定多個鍵
+conn.mset({'pie': 'cherry', 'cordial': 'sherry'})
+# 使用mget一次取得多個值
+conn.mget(['fever', 'carats'])
+conn.mget(['pie', 'cordial'])
+
+#使用delete()刪除鍵
+conn.delete('fever')
+conn.get('fever')
+
+#使用incr()或incrbyfloat()來遞增，decr()遞減
+conn.incr('carats')
+conn.incr('carats', 100)
+conn.decr('carats', 50)
+conn.set('fever', '101.5')
+conn.incrbyfloat('fever')
+conn.incrbyfloat('fever', 0.05)
+conn.incrbyfloat('fever', -2.5) # 沒有decrbyfloat()，因此用負數遞增
+
+# 串列
+# Redis串列只能存放字串，首次插入便會建立串列
+# 使用lpush()在開頭插入
+conn.lpush('zoo', 'bear')
+conn.lpush('zoo', 'alligator', 'duck')
+
+# 使用linsert()在一個值之前/之後插入
+conn.linsert('zoo', 'before', 'bear', 'beaver')
+conn.linsert('zoo', 'after', 'bear', 'cassowary')
+# 使用lset()在某位移植執行插入(串列必須已存在)
+conn.lset('zoo', 2, 'marmoset')
+# 使用rpush()在結尾插入
+conn.rpush('zoo', 'yak')
+# 使用lindex()取得某位移的值
+conn.lindex('zoo', 3)
+# 使用lrange()取得某位移範圍內的值 (0~-1可取出全部值)
+conn.lrange('zoo', 0, 2)
+# 使用ltrim()修剪串列，只留下位移範圍內的值
+conn.ltrim('zoo', 1, 4)
+# 使用lrange()取得某位移範圍內的值 (0~-1可取出全部值)
+conn.lrange('zoo', 0, -1)
+
+
+# 雜湊
+# 與Python字典很像，但只能容納字串，因此只能往下一層，無法製作深層嵌套結構
+
+# 使用 hmset() 設定雜湊song的do與re
+conn.hmset('song', {'do': 'a dear', 're': 'about a dear'})
+# 使用 hset() 設定雜湊的單一欄位值
+conn.hset('song', 'mi', 'a note to follow re')
+# 使用 hget() 取得一個欄位的值
+conn.hget('song', 'mi')
+# 使用 hmget() 取得多個欄位的值
+conn.hmget('song', 're', 'do')
+# 使用 hkeys() 取得雜湊所有欄位的鍵
+conn.hkeys('song')
+# 使用 hvals() 取得所有欄位的值
+conn.hvals('song')
+# 使用 hlen()取得欄位數量
+conn.hlen('song')
+# 使用 hgetall()取得所有欄位鍵與值
+conn.hgetall('song')
+# 當欄位的鍵不存在，使用 hsetnx()設定欄位
+conn.hsetnx('song', 'fa', 'a new note')
+conn.hgetall('song')
+
+
+# 集合
+
+conn.sadd('zoo', 'duck', 'goat', 'turkey')# 將一或多個值加至集合
+conn.scard('zoo') # 取得集合值的數量
+conn.smembers('zoo') # 取得集合所有值
+conn.srem('zoo', 'turkey') # 移除集合的值
+conn.sadd('better_zoo', 'tiger', 'wolf', 'duck') # 製作第二組集合
+conn.sinter('zoo', 'better_zoo') # 查看交集
+conn.sinterstore('wolf_zoo','zoo', 'better_zoo') # 將交集結果存入另一組集合
+conn.smembers('wolf_zoo')
+conn.sunion('zoo', 'better_zoo') # 取得聯集
+conn.sunionstore('f_zoo', 'zoo', 'better_zoo') # 將聯集結果存入另一組集合
+conn.smembers('f_zoo')
+conn.sdiff('zoo', 'better_zoo') # 取得差集
+conn.sdiffstore('zoo_sale', 'zoo', 'better_zoo') # 將差集結果存入
+conn.smembers('zoo_sale')
+
+
+# 有序集合 ( sorted set )
+# zset是Redis最多功能的類型之一，每個值都有相關的浮點分數(score)
+# 可以用值或分數存取每一個項目
+#用途：
+    #排行榜
+    #輔助索引
+    #時間序列，使用時戳來作為分數
+import time
+now = time.time()
+now
+
+conn.zadd("logins", {'smeagol': now})
+conn.zadd("logins", {'sauron': now + (5*60)})
+conn.zadd("logins", {'bilbo': now + (2*60*60)})
+conn.zadd("logins", {'treebeard': now + (24 * 60 * 60)})
+
+conn.zrank('logins', 'bilbo')
+conn.zscore("logins", 'bilbo')
+conn.zrange('logins', 0, -1)
+conn.zrange('logins', 0, -1, withscores=True)
+
+
+# 位元
+# 先建立每天的位元集
+days = ['2013-02-25', '2013-02-26', '2013-02-27']
+big_spender = 1089
+tire_kicker = 40459
+late_joiner = 550212
+# 假設在第一天，有兩位使用者來訪
+conn.setbit(days[0], big_spender, 1)
+conn.setbit(days[0], tire_kicker, 1)
+# 隔天其中一位回訪
+conn.setbit(days[1], big_spender, 1)
+# 再隔一天，其中一位回訪第二次，並加入一位新使用者
+conn.setbit(days[2], big_spender, 1)
+conn.setbit(days[2], late_joiner, 1)
+# 取得這幾天的訪客數量
+for day in days:
+    print(conn.bitcount(day))
+# 是否有特定的使用者在特定日期造訪
+conn.getbit(days[1], tire_kicker)
+# 每天有多少使用者造訪
+conn.bitop('and', 'everyday', *days)
+    # bitop() -> BITOP(operation, destkey, key [key ...])
+    # 將一或多個key進行位元操作，並將結果保存到destkey上
+conn.bitcount('everyday')
+conn.getbit('everyday', big_spender)
+conn.bitop('or', 'alldays', *days)
+conn.bitcount('alldays') # 這三天裡，有幾位使用者曾造訪
+
+
+# 快取與逾期
+# 所有Redis鍵都有存活時間，可使用expire()函式指示要將鍵保存多久
+import time
+key = 'now see it'
+conn.set(key, 'not for long')
+conn.expire(key, 30)
+conn.ttl(key)
+conn.get(key)
+time.sleep(10)
+conn.get(key)
+# expireat()指令會在給定的epoch時間讓一個鍵逾期
+# 讓鍵逾期可讓快取維持在最新狀態、限制登入session
